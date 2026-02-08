@@ -225,253 +225,236 @@
   </div>
 
 <script>
+  <script>
   // 1) PASTE YOUR APPS SCRIPT WEB APP URL HERE:
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyCbYbNyZIrhMYgVpXjhifUpFgKtavA3SVsZys_A9eqiaMb-UU86ITmJ6hLieHuZyaFA/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqC1bfh9SIw9JrSBLDGDMAPtn4bCO-TQSe6J9FFLU0URAz81VOUAhYJECFw876MoF6Xg/exec";
 
   let loggedInPin = null;
   let loggedInStaffName = null;
 
-  const pinInput = document.getElementById("pin");
-  const btnLogin = document.getElementById("btnLogin");
-  const loginBox = document.getElementById("loginBox");
-  const formBox = document.getElementById("formBox");
-  const welcomeText = document.getElementById("welcomeText");
+  // Wait for DOM to be ready
+  document.addEventListener("DOMContentLoaded", function() {
+    const pinInput = document.getElementById("pin");
+    const btnLogin = document.getElementById("btnLogin");
+    const loginBox = document.getElementById("loginBox");
+    const formBox = document.getElementById("formBox");
+    const welcomeText = document.getElementById("welcomeText");
 
-  const participantSelect = document.getElementById("participant");
-  const shiftDate = document.getElementById("shiftDate");
-  const startTime = document.getElementById("startTime");
-  const endTime = document.getElementById("endTime");
-  const km = document.getElementById("km");
-  const incidentOccurred = document.getElementById("incidentOccurred");
-  const incidentDetailsBox = document.getElementById("incidentDetailsBox");
-  const incidentDetails = document.getElementById("incidentDetails");
-  const shiftNotes = document.getElementById("shiftNotes");
+    const participantSelect = document.getElementById("participant");
+    const shiftDate = document.getElementById("shiftDate");
+    const startTime = document.getElementById("startTime");
+    const endTime = document.getElementById("endTime");
+    const km = document.getElementById("km");
+    const incidentOccurred = document.getElementById("incidentOccurred");
+    const incidentDetailsBox = document.getElementById("incidentDetailsBox");
+    const incidentDetails = document.getElementById("incidentDetails");
+    const shiftNotes = document.getElementById("shiftNotes");
 
-  const btnSubmit = document.getElementById("btnSubmit");
-  const btnLogout = document.getElementById("btnLogout");
+    const btnSubmit = document.getElementById("btnSubmit");
+    const btnLogout = document.getElementById("btnLogout");
 
-  const errorText = document.getElementById("errorText");
-  const successText = document.getElementById("successText");
+    const errorText = document.getElementById("errorText");
+    const successText = document.getElementById("successText");
 
-  incidentOccurred.addEventListener("change", () => {
-    if (incidentOccurred.value === "Yes") {
-      incidentDetailsBox.classList.remove("hide");
-    } else {
-      incidentDetailsBox.classList.add("hide");
-      incidentDetails.value = "";
-    }
-  });
+    console.log("DOM loaded, btnLogin:", btnLogin); // Debug log
 
-  function setError(msg){
-    errorText.textContent = msg || "";
-    successText.textContent = "";
-  }
+    // LOGIN
+    btnLogin.addEventListener("click", async () => {
+      console.log("Login button clicked!"); // Debug log
+      
+      setError("");
+      setSuccess("");
 
-  function setSuccess(msg){
-    successText.textContent = msg || "";
-    errorText.textContent = "";
-  }
+      const pin = pinInput.value.trim();
 
-  function todayISO(){
-    const d = new Date();
-    const pad = (n) => String(n).padStart(2,"0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  }
-
-  // default date to today
-  shiftDate.value = todayISO();
-
-  async function fetchParticipants(){
-    // We use a trick: POST with pin but no submit.
-    // The script validates pin, then we request participants separately.
-    // To keep it simple, we will store participants in localStorage after login.
-
-    // For Version 1: participants are loaded AFTER login using a simple "dummy" submission attempt is not ideal.
-    // Instead: We'll embed participants manually in the app after login by requesting a special endpoint.
-    // Since Apps Script is minimal, we’ll do a simple approach:
-    // - Participants are cached in the app (admin updates code) OR
-    // - We add a GET endpoint later.
-    //
-    // For NOW: We'll do a Version 1 approach:
-    // Participants will be loaded from a JSON file (participants.json) later.
-    //
-    // BUT since you asked "dropdown from Google Sheet", we will do it properly by adding a GET action.
-  }
-
-  // LOGIN
-  btnLogin.addEventListener("click", async () => {
-    setError("");
-    setSuccess("");
-
-    const pin = pinInput.value.trim();
-
-    if (!pin || pin.length < 4) {
-      setError("Please enter your PIN.");
-      return;
-    }
-
-    btnLogin.disabled = true;
-    btnLogin.textContent = "Logging in...";
-
-    try {
-      // We call the receiver with a special login action.
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "login", pin })
-      });
-
-      const json = await res.json();
-
-      if (!json.ok) {
-        setError(json.message || "Login failed.");
-      } else {
-        loggedInPin = pin;
-        loggedInStaffName = json.staffName || "Staff";
-
-        // Save pin locally (optional convenience)
-        localStorage.setItem("thrive_pin", pin);
-
-        welcomeText.textContent = `Welcome, ${loggedInStaffName}`;
-
-        // Load participants
-        await loadParticipants(pin);
-
-        loginBox.classList.add("hide");
-        formBox.classList.remove("hide");
-        setSuccess("Logged in.");
-      }
-
-    } catch (err) {
-      setError("Connection error. Check internet or script URL.");
-    }
-
-    btnLogin.disabled = false;
-    btnLogin.textContent = "Login";
-  });
-
-  // Load stored PIN if available
-  const savedPin = localStorage.getItem("thrive_pin");
-  if (savedPin) {
-    pinInput.value = savedPin;
-  }
-
-  async function loadParticipants(pin){
-    participantSelect.innerHTML = `<option value="">Loading participants...</option>`;
-
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "getParticipants", pin })
-      });
-
-      const json = await res.json();
-
-      if (!json.ok) {
-        participantSelect.innerHTML = `<option value="">Unable to load participants</option>`;
-        setError(json.message || "Unable to load participants.");
+      if (!pin || pin.length < 4) {
+        setError("Please enter your PIN.");
         return;
       }
 
-      const participants = json.participants || [];
-      participantSelect.innerHTML = `<option value="">Select participant...</option>`;
+      btnLogin.disabled = true;
+      btnLogin.textContent = "Logging in...";
 
-      participants.forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        participantSelect.appendChild(opt);
-      });
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "login", pin })
+        });
 
-    } catch (err) {
-      participantSelect.innerHTML = `<option value="">Unable to load participants</option>`;
-      setError("Unable to load participants. Check internet.");
-    }
-  }
+        const json = await res.json();
 
-  // SUBMIT
-  btnSubmit.addEventListener("click", async () => {
-    setError("");
-    setSuccess("");
+        if (!json.ok) {
+          setError(json.message || "Login failed.");
+        } else {
+          loggedInPin = pin;
+          loggedInStaffName = json.staffName || "Staff";
 
-    if (!loggedInPin) {
-      setError("Not logged in.");
-      return;
-    }
+          localStorage.setItem("thrive_pin", pin);
 
-    const payload = {
-      action: "submit",
-      pin: loggedInPin,
-      participant: participantSelect.value,
-      shiftDate: shiftDate.value,
-      startTime: startTime.value,
-      endTime: endTime.value,
-      km: km.value || "0",
-      incidentOccurred: incidentOccurred.value,
-      incidentDetails: incidentDetails.value || "",
-      shiftNotes: shiftNotes.value || ""
-    };
+          welcomeText.textContent = `Welcome, ${loggedInStaffName}`;
 
-    // Basic validation
-    if (!payload.participant) return setError("Please select a participant.");
-    if (!payload.shiftDate) return setError("Please select a shift date.");
-    if (!payload.startTime) return setError("Please enter a start time.");
-    if (!payload.endTime) return setError("Please enter an end time.");
-    if (!payload.shiftNotes.trim()) return setError("Please enter shift notes.");
+          await loadParticipants(pin);
 
-    if (payload.incidentOccurred === "Yes" && !payload.incidentDetails.trim()) {
-      return setError("Please enter incident details, or select No.");
-    }
+          loginBox.classList.add("hide");
+          formBox.classList.remove("hide");
+          setSuccess("Logged in.");
+        }
 
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = "Submitting...";
-
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const json = await res.json();
-
-      if (!json.ok) {
-        setError(json.message || "Submission failed.");
-      } else {
-        setSuccess("Submitted successfully.");
-
-        // Clear form fields (keep date and participant optional)
-        startTime.value = "";
-        endTime.value = "";
-        km.value = "";
-        incidentOccurred.value = "No";
-        incidentDetails.value = "";
-        incidentDetailsBox.classList.add("hide");
-        shiftNotes.value = "";
+      } catch (err) {
+        console.error("Login error:", err); // Debug log
+        setError("Connection error. Check internet or script URL.");
       }
 
-    } catch (err) {
-      setError("Connection error. Check internet.");
+      btnLogin.disabled = false;
+      btnLogin.textContent = "Login";
+    });
+
+    // ... rest of your code continues here
+    incidentOccurred.addEventListener("change", () => {
+      if (incidentOccurred.value === "Yes") {
+        incidentDetailsBox.classList.remove("hide");
+      } else {
+        incidentDetailsBox.classList.add("hide");
+        incidentDetails.value = "";
+      }
+    });
+
+    function setError(msg){
+      errorText.textContent = msg || "";
+      successText.textContent = "";
     }
 
-    btnSubmit.disabled = false;
-    btnSubmit.textContent = "Submit Shift Notes";
-  });
+    function setSuccess(msg){
+      successText.textContent = msg || "";
+      errorText.textContent = "";
+    }
 
-  // LOGOUT
-  btnLogout.addEventListener("click", () => {
-    loggedInPin = null;
-    loggedInStaffName = null;
+    function todayISO(){
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2,"0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
 
-    loginBox.classList.remove("hide");
-    formBox.classList.add("hide");
+    shiftDate.value = todayISO();
 
-    setError("");
-    setSuccess("");
+    async function loadParticipants(pin){
+      participantSelect.innerHTML = `<option value="">Loading participants...</option>`;
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "getParticipants", pin })
+        });
+
+        const json = await res.json();
+
+        if (!json.ok) {
+          participantSelect.innerHTML = `<option value="">Unable to load participants</option>`;
+          setError(json.message || "Unable to load participants.");
+          return;
+        }
+
+        const participants = json.participants || [];
+        participantSelect.innerHTML = `<option value="">Select participant...</option>`;
+
+        participants.forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          participantSelect.appendChild(opt);
+        });
+
+      } catch (err) {
+        participantSelect.innerHTML = `<option value="">Unable to load participants</option>`;
+        setError("Unable to load participants. Check internet.");
+      }
+    }
+
+    // SUBMIT
+    btnSubmit.addEventListener("click", async () => {
+      setError("");
+      setSuccess("");
+
+      if (!loggedInPin) {
+        setError("Not logged in.");
+        return;
+      }
+
+      const payload = {
+        action: "submit",
+        pin: loggedInPin,
+        participant: participantSelect.value,
+        shiftDate: shiftDate.value,
+        startTime: startTime.value,
+        endTime: endTime.value,
+        km: km.value || "0",
+        incidentOccurred: incidentOccurred.value,
+        incidentDetails: incidentDetails.value || "",
+        shiftNotes: shiftNotes.value || ""
+      };
+
+      if (!payload.participant) return setError("Please select a participant.");
+      if (!payload.shiftDate) return setError("Please select a shift date.");
+      if (!payload.startTime) return setError("Please enter a start time.");
+      if (!payload.endTime) return setError("Please enter an end time.");
+      if (!payload.shiftNotes.trim()) return setError("Please enter shift notes.");
+
+      if (payload.incidentOccurred === "Yes" && !payload.incidentDetails.trim()) {
+        return setError("Please enter incident details, or select No.");
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "Submitting...";
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+
+        if (!json.ok) {
+          setError(json.message || "Submission failed.");
+        } else {
+          setSuccess("Submitted successfully.");
+
+          startTime.value = "";
+          endTime.value = "";
+          km.value = "";
+          incidentOccurred.value = "No";
+          incidentDetails.value = "";
+          incidentDetailsBox.classList.add("hide");
+          shiftNotes.value = "";
+        }
+
+      } catch (err) {
+        console.error("Submit error:", err);
+        setError("Connection error. Check internet.");
+      }
+
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "Submit Shift Notes";
+    });
+
+    // LOGOUT
+    btnLogout.addEventListener("click", () => {
+      loggedInPin = null;
+      loggedInStaffName = null;
+
+      loginBox.classList.remove("hide");
+      formBox.classList.add("hide");
+
+      setError("");
+      setSuccess("");
+    });
+
+    const savedPin = localStorage.getItem("thrive_pin");
+    if (savedPin) {
+      pinInput.value = savedPin;
+    }
   });
 </script>
-
-</body>
-</html>
-Update scrpt url
