@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thrive 360 Shift Notes</title>
+
+  <style>
+    :root{
+      --green:#31c24b;
+      --dark:#111;
+      --light:#ffffff;
+      --grey:#f2f2f2;
+      --text:#111;
+      --muted:#666;
+      --danger:#c62828;
+    }
+
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--grey);
+      color: var(--text);
+    }
+
+    .wrap{
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .card{
+      background: var(--light);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .logo{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin: 8px 0 14px 0;
+    }
+
+    .logo img{
+      width: 220px;
+      height: auto;
+      border-radius: 12px;
+    }
+
+    h1{
+      font-size: 20px;
+      margin: 0 0 10px 0;
+      text-align:center;
+    }
+
+    .sub{
+      text-align:center;
+      color: var(--muted);
+      margin-top: -4px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    label{
+      font-size: 13px;
+      font-weight: bold;
+      display:block;
+      margin: 12px 0 6px 0;
+    }
+
+    input, select, textarea{
+      width:100%;
+      box-sizing:border-box;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+      background: #fff;
+    }
+
+    textarea{
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .row{
+      display:flex;
+      gap: 12px;
+    }
+    .row > div{
+      flex:1;
+    }
+
+    .btn{
+      width:100%;
+      padding: 13px 14px;
+      border:none;
+      border-radius: 12px;
+      background: var(--green);
+      color:#fff;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 14px;
+      cursor:pointer;
+    }
+
+    .btn:disabled{
+      opacity: 0.6;
+      cursor:not-allowed;
+    }
+
+    .btn-secondary{
+      background: #222;
+    }
+
+    .error{
+      color: var(--danger);
+      font-size: 14px;
+      margin-top: 10px;
+      text-align:center;
+    }
+
+    .success{
+      color: #1b5e20;
+      font-size: 14px;
+      margin-top: 10px;
+      text-align:center;
+    }
+
+    .footer{
+      text-align:center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .tiny{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .hide{ display:none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="card">
+      <div class="logo">
+        <!-- Using your plain white background logo -->
+        <img src="logo.jpg" alt="Thrive 360 Support Service Logo">
+      </div>
+
+      <h1>Thrive 360 Shift Notes</h1>
+      <div class="sub">Staff Shift Notes + Manual Times</div>
+
+      <div id="loginBox">
+        <label>Staff PIN</label>
+        <input id="pin" inputmode="numeric" placeholder="Enter your PIN" />
+
+        <button class="btn" id="btnLogin">Login</button>
+        <div class="tiny">PINs are managed by Thrive 360 admin.</div>
+      </div>
+
+      <div id="formBox" class="hide">
+        <div class="success" id="welcomeText"></div>
+
+        <label>Participant</label>
+        <select id="participant">
+          <option value="">Loading participants...</option>
+        </select>
+
+        <label>Shift Date</label>
+        <input id="shiftDate" type="date" />
+
+        <div class="row">
+          <div>
+            <label>Start Time</label>
+            <input id="startTime" type="time" />
+          </div>
+          <div>
+            <label>End Time</label>
+            <input id="endTime" type="time" />
+          </div>
+        </div>
+
+        <label>KM Travelled</label>
+        <input id="km" type="number" min="0" step="0.1" placeholder="0" />
+
+        <label>Incident Occurred?</label>
+        <select id="incidentOccurred">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+
+        <div id="incidentDetailsBox" class="hide">
+          <label>Incident Details</label>
+          <textarea id="incidentDetails" placeholder="Brief details of what happened..."></textarea>
+        </div>
+
+        <label>Shift Notes</label>
+        <textarea id="shiftNotes" placeholder="Write clear shift notes (what support was provided, outcomes, any concerns)..."></textarea>
+
+        <button class="btn" id="btnSubmit">Submit Shift Notes</button>
+        <button class="btn btn-secondary" id="btnLogout">Logout</button>
+
+        <div class="error" id="errorText"></div>
+        <div class="success" id="successText"></div>
+      </div>
+
+      <div class="footer">
+        <strong>Thrive 360 Support Services</strong><br/>
+        Nourishing Growth – Enriching Lives<br/>
+        📧 Thrive2023@outlook.com.au<br/>
+        📞 0481 826 694
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // 1) PASTE YOUR APPS SCRIPT WEB APP URL HERE:
+  const SCRIPT_URL = https://script.google.com/macros/s/AKfycbxqC1bfh9SIw9JrSBLDGDMAPtn4bCO-TQSe6J9FFLU0URAz81VOUAhYJECFw876MoF6Xg/exec;
+
+  let loggedInPin = null;
+  let loggedInStaffName = null;
+
+  const pinInput = document.getElementById("pin");
+  const btnLogin = document.getElementById("btnLogin");
+  const loginBox = document.getElementById("loginBox");
+  const formBox = document.getElementById("formBox");
+  const welcomeText = document.getElementById("welcomeText");
+
+  const participantSelect = document.getElementById("participant");
+  const shiftDate = document.getElementById("shiftDate");
+  const startTime = document.getElementById("startTime");
+  const endTime = document.getElementById("endTime");
+  const km = document.getElementById("km");
+  const incidentOccurred = document.getElementById("incidentOccurred");
+  const incidentDetailsBox = document.getElementById("incidentDetailsBox");
+  const incidentDetails = document.getElementById("incidentDetails");
+  const shiftNotes = document.getElementById("shiftNotes");
+
+  const btnSubmit = document.getElementById("btnSubmit");
+  const btnLogout = document.getElementById("btnLogout");
+
+  const errorText = document.getElementById("errorText");
+  const successText = document.getElementById("successText");
+
+  incidentOccurred.addEventListener("change", () => {
+    if (incidentOccurred.value === "Yes") {
+      incidentDetailsBox.classList.remove("hide");
+    } else {
+      incidentDetailsBox.classList.add("hide");
+      incidentDetails.value = "";
+    }
+  });
+
+  function setError(msg){
+    errorText.textContent = msg || "";
+    successText.textContent = "";
+  }
+
+  function setSuccess(msg){
+    successText.textContent = msg || "";
+    errorText.textContent = "";
+  }
+
+  function todayISO(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+
+  // default date to today
+  shiftDate.value = todayISO();
+
+  async function fetchParticipants(){
+    // We use a trick: POST with pin but no submit.
+    // The script validates pin, then we request participants separately.
+    // To keep it simple, we will store participants in localStorage after login.
+
+    // For Version 1: participants are loaded AFTER login using a simple "dummy" submission attempt is not ideal.
+    // Instead: We'll embed participants manually in the app after login by requesting a special endpoint.
+    // Since Apps Script is minimal, we’ll do a simple approach:
+    // - Participants are cached in the app (admin updates code) OR
+    // - We add a GET endpoint later.
+    //
+    // For NOW: We'll do a Version 1 approach:
+    // Participants will be loaded from a JSON file (participants.json) later.
+    //
+    // BUT since you asked "dropdown from Google Sheet", we will do it properly by adding a GET action.
+  }
+
+  // LOGIN
+  btnLogin.addEventListener("click", async () => {
+    setError("");
+    setSuccess("");
+
+    const pin = pinInput.value.trim();
+
+    if (!pin || pin.length < 4) {
+      setError("Please enter your PIN.");
+      return;
+    }
+
+    btnLogin.disabled = true;
+    btnLogin.textContent = "Logging in...";
+
+    try {
+      // We call the receiver with a special login action.
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", pin })
+      });
+
+      const json = await res.json();
+
+      if (!json.ok) {
+        setError(json.message || "Login failed.");
+      } else {
+        loggedInPin = pin;
+        loggedInStaffName = json.staffName || "Staff";
+
+        // Save pin locally (optional convenience)
+        localStorage.setItem("thrive_pin", pin);
+
+        welcomeText.textContent = `Welcome, ${loggedInStaffName}`;
+
+        // Load participants
+        await loadParticipants(pin);
+
+        loginBox.classList.add("hide");
+        formBox.classList.remove("hide");
+        setSuccess("Logged in.");
+      }
+
+    } catch (err) {
+      setError("Connection error. Check internet or script URL.");
+    }
+
+    btnLogin.disabled = false;
+    btnLogin.textContent = "Login";
+  });
+
+  // Load stored PIN if available
+  const savedPin = localStorage.getItem("thrive_pin");
+  if (savedPin) {
+    pinInput.value = savedPin;
+  }
+
+  async function loadParticipants(pin){
+    participantSelect.innerHTML = `<option value="">Loading participants...</option>`;
+
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "getParticipants", pin })
+      });
+
+      const json = await res.json();
+
+      if (!json.ok) {
+        participantSelect.innerHTML = `<option value="">Unable to load participants</option>`;
+        setError(json.message || "Unable to load participants.");
+        return;
+      }
+
+      const participants = json.participants || [];
+      participantSelect.innerHTML = `<option value="">Select participant...</option>`;
+
+      participants.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        participantSelect.appendChild(opt);
+      });
+
+    } catch (err) {
+      participantSelect.innerHTML = `<option value="">Unable to load participants</option>`;
+      setError("Unable to load participants. Check internet.");
+    }
+  }
+
+  // SUBMIT
+  btnSubmit.addEventListener("click", async () => {
+    setError("");
+    setSuccess("");
+
+    if (!loggedInPin) {
+      setError("Not logged in.");
+      return;
+    }
+
+    const payload = {
+      action: "submit",
+      pin: loggedInPin,
+      participant: participantSelect.value,
+      shiftDate: shiftDate.value,
+      startTime: startTime.value,
+      endTime: endTime.value,
+      km: km.value || "0",
+      incidentOccurred: incidentOccurred.value,
+      incidentDetails: incidentDetails.value || "",
+      shiftNotes: shiftNotes.value || ""
+    };
+
+    // Basic validation
+    if (!payload.participant) return setError("Please select a participant.");
+    if (!payload.shiftDate) return setError("Please select a shift date.");
+    if (!payload.startTime) return setError("Please enter a start time.");
+    if (!payload.endTime) return setError("Please enter an end time.");
+    if (!payload.shiftNotes.trim()) return setError("Please enter shift notes.");
+
+    if (payload.incidentOccurred === "Yes" && !payload.incidentDetails.trim()) {
+      return setError("Please enter incident details, or select No.");
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Submitting...";
+
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const json = await res.json();
+
+      if (!json.ok) {
+        setError(json.message || "Submission failed.");
+      } else {
+        setSuccess("Submitted successfully.");
+
+        // Clear form fields (keep date and participant optional)
+        startTime.value = "";
+        endTime.value = "";
+        km.value = "";
+        incidentOccurred.value = "No";
+        incidentDetails.value = "";
+        incidentDetailsBox.classList.add("hide");
+        shiftNotes.value = "";
+      }
+
+    } catch (err) {
+      setError("Connection error. Check internet.");
+    }
+
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = "Submit Shift Notes";
+  });
+
+  // LOGOUT
+  btnLogout.addEventListener("click", () => {
+    loggedInPin = null;
+    loggedInStaffName = null;
+
+    loginBox.classList.remove("hide");
+    formBox.classList.add("hide");
+
+    setError("");
+    setSuccess("");
+  });
+</script>
+
+</body>
+</html>
